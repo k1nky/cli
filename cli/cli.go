@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/AlexsJones/cli/command"
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
+	"github.com/k1nky/cli/command"
 )
 
 //Cli structure contains configuration and commands
@@ -37,8 +37,8 @@ func NewCli() *Cli {
 	c := &Cli{}
 
 	l, err := readline.NewEx(&readline.Config{
-		Prompt:          ">>> ",
 		HistoryFile:     "/tmp/readline.tmp",
+		Prompt:          "> ",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
@@ -150,7 +150,7 @@ func (cli *Cli) recurse(c []command.Command, args []string, i int) error {
 func (cli *Cli) findCommand(input string) error {
 	parsed := strings.Fields(input)
 	if len(parsed) == 0 {
-		fmt.Println("No input detected")
+		cli.Warning("No input detected")
 		return nil
 	}
 	if systemCmd := cli.parseSystemCommands(parsed); systemCmd != nil {
@@ -193,13 +193,21 @@ func (cli *Cli) Run() {
 
 	for {
 		//Get user input
-		fmt.Print(">>>")
+		fmt.Print(cli.Scanner.Config.Prompt)
 
 		text := cli.readline()
 
 		err := cli.findCommand(text)
 		if err != nil {
-			color.Red(err.Error())
+			cli.Error(err.Error())
 		}
 	}
+}
+
+func (cli *Cli) Error(msg string) {
+	fmt.Printf("%s: %s", color.RedString("%s", "error"), msg)
+}
+
+func (cli *Cli) Warning(msg string) {
+	fmt.Printf("%s: %s", color.YellowString("%s", "warning"), msg)
 }

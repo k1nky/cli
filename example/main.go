@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/AlexsJones/cli/cli"
-	"github.com/AlexsJones/cli/command"
+	"github.com/k1nky/cli/cli"
+	"github.com/k1nky/cli/command"
 )
 
 func AddCommands(c *cli.Cli) {
@@ -12,7 +12,7 @@ func AddCommands(c *cli.Cli) {
 		Name: "github",
 		Help: "github primary command interface",
 		Func: func(args []string) {
-			fmt.Println("I do nothing...")
+			c.Warning("I do nothing...")
 		},
 		SubCommands: []command.Command{
 			command.Command{
