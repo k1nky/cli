@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/k1nky/cli/cli"
-	"github.com/k1nky/cli/command"
+	"github.com/k1nky/cli/pkg/cli"
+	"github.com/k1nky/cli/pkg/command"
 )
 
 func AddCommands(c *cli.Cli) {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
-	"github.com/k1nky/cli/command"
+	"github.com/k1nky/cli/pkg/command"
 )
 
 //Cli structure contains configuration and commands

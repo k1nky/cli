@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/k1nky/cli/cli"
-	"github.com/k1nky/cli/command"
+	"github.com/k1nky/cli/pkg/cli"
+	"github.com/k1nky/cli/pkg/command"
 )
 
 /*********************************************************************************
