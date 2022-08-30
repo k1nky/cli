@@ -20,6 +20,7 @@ type Cli struct {
 	ReadlineConfig *readline.Config
 	Scanner        *readline.Instance
 	Parser         parser.IParser
+	OnExit         func()
 }
 
 func filterInput(r rune) (rune, bool) {
@@ -38,6 +39,9 @@ var completer = readline.NewPrefixCompleter()
 func NewCli() *Cli {
 	c := &Cli{
 		Parser: &parser.Parser{},
+		OnExit: func() {
+			fmt.Println("bye")
+		},
 	}
 
 	l, err := readline.NewEx(&readline.Config{
@@ -56,6 +60,12 @@ func NewCli() *Cli {
 	c.Scanner = l
 
 	return c
+}
+
+// Close runs exit command
+func (cli *Cli) Close() {
+	cli.OnExit()
+	os.Exit(0)
 }
 
 //AddCommand is a method on Cli takes Command as input
@@ -110,8 +120,7 @@ func (cli *Cli) recurseHelp(c []command.Command, rootCommands []string, offset i
 
 func (cli *Cli) parseSystemCommands(input []string) error {
 	if input[0] == "exit" {
-		fmt.Println("Bye")
-		os.Exit(0)
+		cli.Close()
 	}
 	if input[0] == "clear" {
 		print("\033[H\033[2J")
@@ -190,8 +199,7 @@ func (cli *Cli) Run() {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for _ = range c {
-			fmt.Printf("\nBye\n")
-			os.Exit(0)
+			cli.Close()
 		}
 	}()
 
