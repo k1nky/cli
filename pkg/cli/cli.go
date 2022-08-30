@@ -11,6 +11,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 	"github.com/k1nky/cli/pkg/command"
+	"github.com/k1nky/cli/pkg/parser"
 )
 
 //Cli structure contains configuration and commands
@@ -18,6 +19,7 @@ type Cli struct {
 	Commands       []command.Command
 	ReadlineConfig *readline.Config
 	Scanner        *readline.Instance
+	Parser         parser.IParser
 }
 
 func filterInput(r rune) (rune, bool) {
@@ -34,7 +36,9 @@ var completer = readline.NewPrefixCompleter()
 //NewCli creates a new instance of Cli
 //It returns a pointer to the Cli object
 func NewCli() *Cli {
-	c := &Cli{}
+	c := &Cli{
+		Parser: &parser.Parser{},
+	}
 
 	l, err := readline.NewEx(&readline.Config{
 		HistoryFile:     "/tmp/readline.tmp",
@@ -148,7 +152,7 @@ func (cli *Cli) recurse(c []command.Command, args []string, i int) error {
 }
 
 func (cli *Cli) findCommand(input string) error {
-	parsed := strings.Fields(input)
+	parsed := cli.Parser.Parse(input)
 	if len(parsed) == 0 {
 		cli.Warning("No input detected")
 		return nil
