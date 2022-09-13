@@ -4,71 +4,71 @@ import (
 	"fmt"
 
 	"github.com/k1nky/cli/pkg/cli"
-	"github.com/k1nky/cli/pkg/command"
 )
 
 func AddCommands(c *cli.Cli) {
-	c.AddCommand(command.Command{
+	c.AddCommand(cli.Command{
 		Name: "github",
 		Help: "github primary command interface",
-		Func: func(args []string) {
+		Func: func(ctx *cli.Context, args cli.Args) {
 			c.Warning("I do nothing...")
 		},
-		SubCommands: []command.Command{
-			command.Command{
+		SubCommands: []cli.Command{
+			{
 				Name: "login",
 				Help: "access token to github",
-				Func: func(args []string) {
-					if len(args) == 0 {
+				Func: func(ctx *cli.Context, args cli.Args) {
+					if len(args.Values) == 0 {
 						fmt.Println("Failed login")
 						return
 					}
-					fmt.Printf("Logged in %s", args[0])
+					fmt.Printf("Logged in %s", args.Values[0])
 				},
 			},
-			command.Command{
+			{
 				Name: "logout",
 				Help: "allows you to logout from github",
-				Func: func(args []string) {
-					if len(args) == 0 {
+				Func: func(ctx *cli.Context, args cli.Args) {
+					if len(args.Values) == 0 {
 						fmt.Println("Failed logout")
 						return
 					}
-					fmt.Printf("Logged out with username %s\n", args[0])
+					fmt.Printf("Logged out with username %s\n", args.Values[0])
 				},
 			},
 		},
 	})
-	c.AddCommand(command.Command{
+	c.AddCommand(cli.Command{
 		Name: "sql",
 		Help: "sql primary command interface",
-		Func: func(args []string) {
+		Func: func(ctx *cli.Context, args cli.Args) {
 			fmt.Println("I do nothing...")
 		},
-		SubCommands: []command.Command{
-			command.Command{
+		SubCommands: []cli.Command{
+			{
 				Name: "login",
 				Help: "access token to github",
-				Func: func(args []string) {
-					if len(args) == 0 {
+				Func: func(ctx *cli.Context, args cli.Args) {
+					if len(args.Values) == 0 {
 						fmt.Println("Failed login")
 						return
 					}
-					fmt.Printf("Logged in %s", args[0])
+					fmt.Println(ctx.Commands)
+					fmt.Printf("Logged in %s", args.Values[0])
 				},
 			},
-			command.Command{
+			{
 				Name: "logout",
 				Help: "allows you to logout from github",
-				Func: func(args []string) {
-					if len(args) == 0 {
+				Func: func(ctx *cli.Context, args cli.Args) {
+					if len(args.Values) == 0 {
 						fmt.Println("Failed logout")
 						return
 					}
-					fmt.Printf("Logged out with username %s\n", args[0])
+					fmt.Printf("Logged out with username %s\n", args.Values[0])
 				},
-				SubCommands: []command.Command{
-					command.Command{
+				SubCommands: []cli.Command{
+					{
 						Name: "defer",
 						Help: "Defer a logout",
 						Func: nil,

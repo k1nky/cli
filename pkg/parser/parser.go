@@ -4,9 +4,13 @@ import (
 	"strings"
 )
 
-type Parser struct{}
+type Parser interface {
+	Parse(input string) []string
+}
 
-func (p *Parser) Parse(input string) []string {
+type QuoteParser struct{}
+
+func (p *QuoteParser) Parse(input string) []string {
 	parsed := []string{}
 
 	input = strings.TrimSpace(input)

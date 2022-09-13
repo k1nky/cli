@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/k1nky/cli/pkg/cli"
-	"github.com/k1nky/cli/pkg/command"
 )
 
 /*********************************************************************************
@@ -16,11 +15,11 @@ import (
 **********************************************************************************/
 func TestAddCommand(t *testing.T) {
 
-	cli := cli.NewCli()
+	c := cli.NewCli()
 
-	cli.AddCommand(command.Command{})
+	c.AddCommand(cli.Command{})
 
-	if len(cli.Commands) != 1 {
+	if len(c.Commands) != 1 {
 		t.Error("Incorrect arg count")
 	}
 }

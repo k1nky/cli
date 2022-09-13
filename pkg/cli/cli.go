@@ -10,16 +10,17 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
-	"github.com/k1nky/cli/pkg/command"
 	"github.com/k1nky/cli/pkg/parser"
 )
 
 //Cli structure contains configuration and commands
 type Cli struct {
-	Commands       []command.Command
+	Commands       []Command
+	Current        *Context
+	Contexts       map[string]*Context
 	ReadlineConfig *readline.Config
 	Scanner        *readline.Instance
-	Parser         parser.IParser
+	Parser         parser.Parser
 	OnExit         func()
 }
 
@@ -38,12 +39,13 @@ var completer = readline.NewPrefixCompleter()
 //It returns a pointer to the Cli object
 func NewCli() *Cli {
 	c := &Cli{
-		Parser: &parser.Parser{},
+		Parser: &parser.QuoteParser{},
 		OnExit: func() {
 			fmt.Println("bye")
 		},
+		Contexts: make(map[string]*Context),
 	}
-
+	c.SetContext("")
 	l, err := readline.NewEx(&readline.Config{
 		HistoryFile:     "/tmp/readline.tmp",
 		Prompt:          "> ",
@@ -62,6 +64,17 @@ func NewCli() *Cli {
 	return c
 }
 
+func (cli *Cli) SetContext(name string) *Context {
+	ctx, exists := cli.Contexts[name]
+	if !exists {
+		ctx = &Context{
+			Name: name,
+		}
+	}
+	cli.Current = ctx
+	return ctx
+}
+
 // Close runs exit command
 func (cli *Cli) Close() {
 	cli.OnExit()
@@ -70,7 +83,7 @@ func (cli *Cli) Close() {
 
 //AddCommand is a method on Cli takes Command as input
 //This appends to the current command list to search through for input
-func (cli *Cli) AddCommand(c command.Command) {
+func (cli *Cli) AddCommand(c Command) {
 	cli.Commands = append(cli.Commands, c)
 
 	//recusively add command names to completer
@@ -79,7 +92,7 @@ func (cli *Cli) AddCommand(c command.Command) {
 	completer.Children = append(completer.Children, pc)
 }
 
-func (cli *Cli) peakChildren(c []command.Command, name string) *command.Command {
+func (cli *Cli) peakChildren(c []Command, name string) *Command {
 	for _, cmd := range c {
 		if cmd.Name == name {
 			return &cmd
@@ -88,7 +101,7 @@ func (cli *Cli) peakChildren(c []command.Command, name string) *command.Command 
 	return nil
 }
 
-func (cli *Cli) recurseCompletion(c []command.Command, pc *readline.PrefixCompleter, i int) error {
+func (cli *Cli) recurseCompletion(c []Command, pc *readline.PrefixCompleter, i int) error {
 	for _, cmd := range c {
 		p := readline.PcItem(cmd.Name)
 		pc.Children = append(pc.Children, p)
@@ -100,7 +113,7 @@ func (cli *Cli) recurseCompletion(c []command.Command, pc *readline.PrefixComple
 	return nil
 }
 
-func (cli *Cli) recurseHelp(c []command.Command, rootCommands []string, offset int) {
+func (cli *Cli) recurseHelp(c []Command, rootCommands []string, offset int) {
 
 	for _, cmd := range c {
 		for i := 0; i < offset; i++ {
@@ -137,22 +150,21 @@ func (cli *Cli) parseSystemCommands(input []string) error {
 	return nil
 }
 
-func (cli *Cli) recurse(c []command.Command, args []string, i int) error {
+func (cli *Cli) recurse(ctx *Context, c []Command, args []string, i int) error {
 	for _, cmd := range c {
 		if i > len(args) {
 			return nil
 		}
 		if cmd.Name == args[i] {
+			ctx.PushCommand(cmd.Name)
 			if len(args) > i+1 {
 				if child := cli.peakChildren(cmd.SubCommands, args[i+1]); child != nil {
-					cli.recurse(cmd.SubCommands, args, i+1)
+					cli.recurse(ctx, cmd.SubCommands, args, i+1)
 				} else {
-					cmd.Func(args[i+1:])
-					fmt.Printf("\n")
+					cli.runCommand(ctx, cmd, args, i+1)
 				}
 			} else {
-				cmd.Func(args[i+1:])
-				fmt.Printf("\n")
+				cli.runCommand(ctx, cmd, args, i+1)
 			}
 
 		}
@@ -160,8 +172,17 @@ func (cli *Cli) recurse(c []command.Command, args []string, i int) error {
 	return nil
 }
 
-func (cli *Cli) findCommand(input string) error {
+func (cli *Cli) runCommand(ctx *Context, cmd Command, args []string, i int) error {
+	cmd.Func(ctx, Args{
+		Values: args[i:],
+	})
+	fmt.Println()
+	return nil
+}
+
+func (cli *Cli) findCommand(ctx *Context, input string) error {
 	parsed := cli.Parser.Parse(input)
+	ctx.ResetCommands()
 	if len(parsed) == 0 {
 		cli.Warning("No input detected")
 		return nil
@@ -169,8 +190,7 @@ func (cli *Cli) findCommand(input string) error {
 	if systemCmd := cli.parseSystemCommands(parsed); systemCmd != nil {
 		return nil
 	}
-	currentCommands := cli.Commands
-	error := cli.recurse(currentCommands, parsed, 0)
+	error := cli.recurse(ctx, cli.Commands, parsed, 0)
 	if error != nil {
 		return error
 	}
@@ -188,7 +208,7 @@ func (cli *Cli) readline() string {
 func (cli *Cli) Run() {
 
 	if len(os.Args) > 1 && os.Args[1] == "unattended" {
-		err := cli.findCommand(strings.Join(os.Args[2:], " "))
+		err := cli.findCommand(cli.Current, strings.Join(os.Args[2:], " "))
 		if err != nil {
 			color.Red(err.Error())
 		}
@@ -209,7 +229,7 @@ func (cli *Cli) Run() {
 
 		text := cli.readline()
 
-		err := cli.findCommand(text)
+		err := cli.findCommand(cli.Current, text)
 		if err != nil {
 			cli.Error(err.Error())
 		}
