@@ -10,6 +10,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
+	"github.com/k1nky/cli/pkg/complete"
 	"github.com/k1nky/cli/pkg/parser"
 )
 
@@ -33,7 +34,9 @@ func filterInput(r rune) (rune, bool) {
 	return r, true
 }
 
-var completer = readline.NewPrefixCompleter()
+// var completer = readline.NewPrefixCompleter()
+
+var completer = complete.NewCompleter([]string{})
 
 //NewCli creates a new instance of Cli
 //It returns a pointer to the Cli object
@@ -87,9 +90,14 @@ func (cli *Cli) AddCommand(c Command) {
 	cli.Commands = append(cli.Commands, c)
 
 	//recusively add command names to completer
-	pc := readline.PcItem(c.Name)
+	// pc := readline.PcItem(c.Name)
+	pc := complete.CompleterItem(c.Name, []string{})
 	cli.recurseCompletion(c.SubCommands, pc, 0)
-	completer.Children = append(completer.Children, pc)
+	// completer.Children = append(completer.Children, pc)
+	children := completer.GetChildren()
+	children = append(children, pc)
+
+	completer.SetChildren(children)
 }
 
 func (cli *Cli) peakChildren(c []Command, name string) *Command {
@@ -101,10 +109,14 @@ func (cli *Cli) peakChildren(c []Command, name string) *Command {
 	return nil
 }
 
-func (cli *Cli) recurseCompletion(c []Command, pc *readline.PrefixCompleter, i int) error {
+func (cli *Cli) recurseCompletion(c []Command, pc readline.PrefixCompleterInterface, i int) error {
 	for _, cmd := range c {
-		p := readline.PcItem(cmd.Name)
-		pc.Children = append(pc.Children, p)
+		// p := readline.PcItem(cmd.Name)
+		p := complete.CompleterItem(cmd.Name, []string{"aaa", "bbb"})
+		children := pc.GetChildren()
+		children = append(children, p)
+		pc.SetChildren(children)
+		// pc.Children = append(pc.Children, p)
 
 		if len(cmd.SubCommands) > 0 {
 			cli.recurseCompletion(cmd.SubCommands, p, i+1)
